@@ -80,6 +80,7 @@ module ClickhouseFixtures
 
   def self.load!(client = ClickhouseClient.new)
     client.execute("TRUNCATE TABLE events")
+    client.execute("TRUNCATE TABLE daily_event_counts") # refilled by the insert into events below
     client.execute("TRUNCATE TABLE guests")
 
     client.insert_rows("guests", GUESTS.map do |id, pass, skill, region, opt_in|

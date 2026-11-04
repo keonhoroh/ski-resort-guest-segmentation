@@ -21,6 +21,7 @@ RSpec.describe ClickhouseMigrator do
     described_class.new.migrate!
 
     versions = client.query("SELECT version FROM clickhouse_migrations ORDER BY version").map { |row| row["version"] }
-    expect(versions).to eq(%w[001 002])
+    files = Dir[ClickhouseMigrator::MIGRATIONS_DIR.join("*.sql")].map { |path| File.basename(path).split("_").first }
+    expect(versions).to eq(files.sort)
   end
 end

@@ -20,6 +20,9 @@ class ClickhouseDataGenerator
     raise ArgumentError, "need at least 100 guests" if guests < 100
 
     @client.execute("TRUNCATE TABLE events")
+    # TRUNCATE does not reach the summary table, so clear it too. Inserting
+    # into events refills it.
+    @client.execute("TRUNCATE TABLE daily_event_counts")
     @client.execute("TRUNCATE TABLE guests")
     @client.execute(SQL_DIR.join("guests.sql").read, guests: guests)
     @client.execute(SQL_DIR.join("events.sql").read, events: events)

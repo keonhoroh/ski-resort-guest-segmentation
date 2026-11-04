@@ -37,6 +37,8 @@ Segment rules are JSON:
 }
 ```
 
+Event rules read `daily_event_counts`, a daily summary of the events that a ClickHouse materialized view keeps up to date. It has a quarter of the rows and is sorted by event type, difficulty, and date, so most queries skip most of it. See [BENCHMARKS.md](BENCHMARKS.md) for measurements.
+
 User input never becomes SQL text. Fields and operators come from allow-lists, and every value is sent as a ClickHouse query parameter.
 
 ### Campaigns
@@ -55,7 +57,7 @@ The job is safe to retry. A unique index on `(campaign_id, guest_id)` means a gu
 | `app/services/` | ClickHouse client, data generator, and the segment rules engine |
 | `db/clickhouse/` | ClickHouse table definitions and data generation SQL |
 | `db/migrate/` | PostgreSQL migrations |
-| `lib/tasks/` | `clickhouse:*` commands |
+| `lib/tasks/` | `clickhouse:*` and `bench:*` commands |
 | `spec/` | RSpec tests, including a hand-built fixture with known answers |
 | `frontend/` | React app |
 | `config/`, `bin/` | Standard Rails configuration and scripts |
@@ -75,6 +77,15 @@ bin/rails server                  # API on http://localhost:3000
 bundle exec sidekiq               # background jobs (in a second terminal)
 cd frontend && npm install && npm run dev  # web app on http://localhost:5173
 ```
+
+## Benchmarks
+
+```sh
+bin/rails bench:baseline   # builds a deliberately badly organized copy of events, for comparison
+bin/rails bench:segments   # median time, rows read, and data read for the example segments
+```
+
+Results are in [BENCHMARKS.md](BENCHMARKS.md).
 
 ## Tests
 

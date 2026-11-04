@@ -32,10 +32,12 @@ class ClickhouseClient
   end
 
   # Runs a SELECT and returns its rows as an array of hashes.
-  def query(sql, params = {})
+  # `settings` are extra ClickHouse settings, such as { query_id: "bench-1" }.
+  def query(sql, params = {}, settings = {})
     body = post(sql, params, default_format: "JSON",
                              # Return big integers (like counts) as numbers, not strings.
-                             output_format_json_quote_64bit_integers: 0)
+                             output_format_json_quote_64bit_integers: 0,
+                             **settings)
     JSON.parse(body).fetch("data")
   end
 

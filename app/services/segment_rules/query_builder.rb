@@ -12,20 +12,39 @@ module SegmentRules
   #
   # With email_opt_in_only: true, only guests who agreed to email are matched
   # (used when sending a campaign).
+  #
+  # `source` picks which table the event rules read:
+  #   daily_event_counts  the daily summary (default, and the fastest)
+  #   events              the raw events
+  #   events_baseline     a deliberately badly organized copy (benchmark only)
+  # All three give the same answers, because every rule's time limits fall on
+  # midnight, so whole days are never split.
   class QueryBuilder
     DATE_TIME = "DateTime('UTC')".freeze
 
+    # For each source: its day/time column, that column's type, and how to count events.
+    RAW_EVENTS = { time: "event_time", type: DATE_TIME, count: "count()" }.freeze
+    SOURCES = {
+      "daily_event_counts" => { time: "event_date", type: "Date", count: "sum(events)" },
+      "events" => RAW_EVENTS,
+      "events_baseline" => RAW_EVENTS
+    }.freeze
+
     attr_reader :params
 
-    def initialize(definition, as_of: SegmentRules.as_of, email_opt_in_only: false)
+    def initialize(definition, as_of: SegmentRules.as_of, email_opt_in_only: false, source: "daily_event_counts")
       validator = Validator.new(definition)
       raise InvalidRules, validator.errors.join("; ") unless validator.valid?
+
+      @source = source
+      @time, @time_type, @count = SOURCES.fetch(source) { raise ArgumentError, "unknown source: #{source}" }
+                                         .values_at(:time, :type, :count)
 
       definition = definition.deep_stringify_keys
       @params = {}
       # Events count if they happened before the end of the as_of day.
       @end_day = as_of + 1
-      @end_time = param(time_at(@end_day), DATE_TIME)
+      @end_time = start_of(@end_day)
 
       conditions = definition["rules"].map { |rule| send("#{rule['type']}_condition", rule) }
       @where = conditions.map { |condition| "(#{condition})" }
@@ -67,15 +86,13 @@ module SegmentRules
 
     # Guests whose number of matching events passes the comparison.
     def event_count_condition(rule)
-      filters = [ "event_type = #{param(rule['event'], 'String')}", "event_time < #{@end_time}" ]
+      filters = [ "event_type = #{param(rule['event'], 'String')}", "#{@time} < #{@end_time}" ]
       filters << "difficulty = #{param(rule['difficulty'], 'String')}" if rule["difficulty"]
-      if rule["window_days"]
-        filters << "event_time >= #{param(time_at(@end_day - rule['window_days']), DATE_TIME)}"
-      end
+      filters << "#{@time} >= #{start_of(@end_day - rule['window_days'])}" if rule["window_days"]
 
       sql_operator, ruby_operator = COUNT_OPERATORS.fetch(rule["operator"])
-      comparison = "count() #{sql_operator} #{param(rule['value'], 'UInt32')}"
-      subquery = "SELECT guest_id FROM events WHERE #{filters.join(' AND ')} GROUP BY guest_id"
+      comparison = "#{@count} #{sql_operator} #{param(rule['value'], 'UInt32')}"
+      subquery = "SELECT guest_id FROM #{@source} WHERE #{filters.join(' AND ')} GROUP BY guest_id"
 
       # Guests with zero matching events never appear in the subquery. When zero
       # passes the comparison (for example "fewer than 3 lessons"), include them
@@ -90,11 +107,11 @@ module SegmentRules
     # older_than: has visited, but not in the last N days (never-visited guests are excluded).
     # within:     visited at least once in the last N days.
     def last_event_condition(rule)
-      cutoff = param(time_at(@end_day - rule["days"]), DATE_TIME)
+      cutoff = start_of(@end_day - rule["days"])
       operator = rule["operator"] == "older_than" ? "<" : ">="
 
-      "guest_id IN (SELECT guest_id FROM events WHERE event_time < #{@end_time} " \
-        "GROUP BY guest_id HAVING max(event_time) #{operator} #{cutoff})"
+      "guest_id IN (SELECT guest_id FROM #{@source} WHERE #{@time} < #{@end_time} " \
+        "GROUP BY guest_id HAVING max(#{@time}) #{operator} #{cutoff})"
     end
 
     # Stores a value and returns its placeholder, such as {p3:String}.
@@ -108,8 +125,11 @@ module SegmentRules
       { true => 1, false => 0 }.fetch(value, value)
     end
 
-    def time_at(date)
-      date.strftime("%Y-%m-%d 00:00:00")
+    # A placeholder for the very start (midnight) of a day, in the source's
+    # own type: a Date for the summary, a DateTime for raw events.
+    def start_of(date)
+      value = @time_type == "Date" ? date.iso8601 : date.strftime("%Y-%m-%d 00:00:00")
+      param(value, @time_type)
     end
   end
 end
