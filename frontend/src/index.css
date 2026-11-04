@@ -220,3 +220,79 @@ p.errors {
   text-align: center;
   padding: 48px 0;
 }
+
+/* Launch form */
+
+.launch {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  max-width: 520px;
+}
+
+.launch label {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-weight: 600;
+}
+
+.launch textarea {
+  font: inherit;
+  font-size: 14px;
+  font-weight: normal;
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+}
+
+.launch input {
+  font-weight: normal;
+}
+
+.buttons {
+  display: flex;
+  gap: 8px;
+}
+
+/* Campaigns */
+
+.progress-cell {
+  min-width: 160px;
+}
+
+.bar {
+  height: 8px;
+  background: var(--line);
+  border-radius: 4px;
+  overflow: hidden;
+  margin-bottom: 4px;
+}
+
+.bar > div {
+  height: 100%;
+  background: var(--accent);
+  transition: width 0.3s;
+}
+
+.status {
+  font-size: 13px;
+  padding: 2px 8px;
+  border-radius: 10px;
+  background: var(--panel);
+}
+
+.status.completed {
+  background: #e3f4e8;
+  color: #1e7a3c;
+}
+
+.status.running {
+  background: #e3ecfb;
+  color: var(--accent);
+}
+
+.status.failed {
+  background: #fbe5e2;
+  color: var(--danger);
+}

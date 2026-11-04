@@ -1,10 +1,16 @@
 import { useEffect, useState } from 'react'
 import { api, type Options, type Segment } from './api'
+import { CampaignList } from './CampaignList'
+import { LaunchForm } from './LaunchForm'
 import { SegmentBuilder } from './SegmentBuilder'
 import { SegmentList } from './SegmentList'
 
-// Which screen is showing. When editing, it also holds the segment being edited.
-type View = { name: 'list' } | { name: 'builder'; segment?: Segment }
+// Which screen is showing. Some screens also hold the segment they are about.
+type View =
+  | { name: 'list' }
+  | { name: 'builder'; segment?: Segment }
+  | { name: 'launch'; segment: Segment }
+  | { name: 'campaigns' }
 
 export default function App() {
   const [view, setView] = useState<View>({ name: 'list' })
@@ -16,19 +22,26 @@ export default function App() {
     api.options().then(setOptions).catch(() => setOptionsError(true))
   }, [])
 
+  function tab(active: boolean) {
+    return active ? 'tab active' : 'tab'
+  }
+
   return (
     <div className="app">
       <header>
         <h1>Guest Segment Builder</h1>
         <nav>
-          <button className={view.name === 'list' ? 'tab active' : 'tab'} onClick={() => setView({ name: 'list' })}>
+          <button className={tab(view.name === 'list')} onClick={() => setView({ name: 'list' })}>
             Saved segments
           </button>
           <button
-            className={view.name === 'builder' && !view.segment ? 'tab active' : 'tab'}
+            className={tab(view.name === 'builder' && !view.segment)}
             onClick={() => setView({ name: 'builder' })}
           >
             New segment
+          </button>
+          <button className={tab(view.name === 'campaigns')} onClick={() => setView({ name: 'campaigns' })}>
+            Campaigns
           </button>
         </nav>
       </header>
@@ -38,7 +51,11 @@ export default function App() {
         {!optionsError && !options && <p className="muted">Loading…</p>}
 
         {options && view.name === 'list' && (
-          <SegmentList onEdit={(segment) => setView({ name: 'builder', segment })} onNew={() => setView({ name: 'builder' })} />
+          <SegmentList
+            onEdit={(segment) => setView({ name: 'builder', segment })}
+            onLaunch={(segment) => setView({ name: 'launch', segment })}
+            onNew={() => setView({ name: 'builder' })}
+          />
         )}
 
         {options && view.name === 'builder' && (
@@ -50,6 +67,16 @@ export default function App() {
             onSaved={() => setView({ name: 'list' })}
           />
         )}
+
+        {options && view.name === 'launch' && (
+          <LaunchForm
+            segment={view.segment}
+            onLaunched={() => setView({ name: 'campaigns' })}
+            onCancel={() => setView({ name: 'list' })}
+          />
+        )}
+
+        {options && view.name === 'campaigns' && <CampaignList />}
       </main>
     </div>
   )

@@ -3,10 +3,11 @@ import { api, type Segment } from './api'
 
 type Props = {
   onEdit: (segment: Segment) => void
+  onLaunch: (segment: Segment) => void
   onNew: () => void
 }
 
-export function SegmentList({ onEdit, onNew }: Props) {
+export function SegmentList({ onEdit, onLaunch, onNew }: Props) {
   const [segments, setSegments] = useState<Segment[] | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [confirmingId, setConfirmingId] = useState<number | null>(null)
@@ -70,6 +71,7 @@ export function SegmentList({ onEdit, onNew }: Props) {
                 </>
               ) : (
                 <>
+                  <button className="link" onClick={() => onLaunch(segment)}>Launch</button>
                   <button className="link" onClick={() => onEdit(segment)}>Edit</button>
                   <button className="link" onClick={() => setConfirmingId(segment.id)}>Delete</button>
                 </>

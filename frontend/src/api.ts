@@ -52,6 +52,22 @@ export type Options = {
   max_rules: number
 }
 
+export type CampaignStatus = 'queued' | 'running' | 'completed' | 'failed'
+
+export type Campaign = {
+  id: number
+  segment_id: number
+  segment_name: string
+  name: string
+  message: string
+  status: CampaignStatus
+  audience_count: number | null
+  sent_count: number
+  started_at: string | null
+  finished_at: string | null
+  created_at: string
+}
+
 export type Preview = {
   count: number
   query_ms: number
@@ -94,4 +110,7 @@ export const api = {
   // `signal` lets the caller cancel the request if the rules change again.
   preview: (rules: Definition, signal: AbortSignal) =>
     request<Preview>('/segments/preview', { method: 'POST', body: JSON.stringify({ rules }), signal }),
+  launchCampaign: (segmentId: number, name: string, message: string) =>
+    request<Campaign>(`/segments/${segmentId}/campaigns`, { method: 'POST', body: JSON.stringify({ name, message }) }),
+  listCampaigns: () => request<Campaign[]>('/campaigns'),
 }
