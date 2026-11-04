@@ -17,6 +17,31 @@ module ClickhouseFixtures
     lesson_not_returned_14_days: [ 4 ]
   }.freeze
 
+  # The same three segments, written as segment rules.
+  SEGMENTS = {
+    season_lapsed_30_days: {
+      "match" => "all",
+      "rules" => [
+        { "type" => "attribute", "field" => "pass_type", "operator" => "eq", "value" => "season" },
+        { "type" => "last_event", "operator" => "older_than", "days" => 30 }
+      ]
+    },
+    expert_scans_50_in_120_days: {
+      "match" => "all",
+      "rules" => [
+        { "type" => "event_count", "event" => "lift_scan", "difficulty" => "expert",
+          "operator" => "gte", "value" => 50, "window_days" => 120 }
+      ]
+    },
+    lesson_not_returned_14_days: {
+      "match" => "all",
+      "rules" => [
+        { "type" => "event_count", "event" => "lesson", "operator" => "gte", "value" => 1 },
+        { "type" => "last_event", "operator" => "older_than", "days" => 14 }
+      ]
+    }
+  }.freeze
+
   GUESTS = [
     # id, pass, skill, region, opt-in
     [ 1, "season",    "expert",       "Northeast",     1 ], # 60 expert scans, last visit 2 days ago → B

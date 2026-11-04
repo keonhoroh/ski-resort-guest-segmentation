@@ -9,5 +9,6 @@ Rails.application.routes.draw do
   namespace :api do
     # GET /api/health  →  Api::HealthController, method `show`
     get "health", to: "health#show"
+    post "segments/preview", to: "segments#preview"
   end
 end
