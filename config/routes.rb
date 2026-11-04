@@ -15,6 +15,13 @@ Rails.application.routes.draw do
         post :preview  # POST /api/segments/preview
         get :options   # GET  /api/segments/options
       end
+
+      # POST /api/segments/:segment_id/campaigns   launch a campaign for this segment
+      resources :campaigns, only: :create
     end
+
+    # GET /api/campaigns       list
+    # GET /api/campaigns/:id   progress of one campaign
+    resources :campaigns, only: %i[index show]
   end
 end

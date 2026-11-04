@@ -9,12 +9,15 @@ module SegmentRules
   #   builder.count_sql  # => "SELECT count() AS count FROM guests WHERE (pass_type = {p0:String}) ..."
   #   builder.params     # => { "p0" => "season", ... }
   #   ClickhouseClient.new.query(builder.count_sql, builder.params)
+  #
+  # With email_opt_in_only: true, only guests who agreed to email are matched
+  # (used when sending a campaign).
   class QueryBuilder
     DATE_TIME = "DateTime('UTC')".freeze
 
     attr_reader :params
 
-    def initialize(definition, as_of: SegmentRules.as_of)
+    def initialize(definition, as_of: SegmentRules.as_of, email_opt_in_only: false)
       validator = Validator.new(definition)
       raise InvalidRules, validator.errors.join("; ") unless validator.valid?
 
@@ -27,6 +30,7 @@ module SegmentRules
       conditions = definition["rules"].map { |rule| send("#{rule['type']}_condition", rule) }
       @where = conditions.map { |condition| "(#{condition})" }
                          .join("\n  #{MATCHES.fetch(definition['match'])} ")
+      @where = "(#{@where})\n  AND email_opt_in = 1" if email_opt_in_only
     end
 
     def count_sql
@@ -35,6 +39,14 @@ module SegmentRules
 
     def guest_ids_sql
       "SELECT guest_id FROM guests\nWHERE #{@where}\nORDER BY guest_id"
+    end
+
+    # One page of matching guest IDs, in order, starting after a given ID.
+    # Pass the page position along with the rule values:
+    #   client.query(builder.guest_ids_batch_sql, builder.params.merge(after_guest_id: 0, batch_size: 1000))
+    def guest_ids_batch_sql
+      "SELECT guest_id FROM guests\nWHERE (#{@where})\n  AND guest_id > {after_guest_id:UInt64}\n" \
+        "ORDER BY guest_id\nLIMIT {batch_size:UInt32}"
     end
 
     private

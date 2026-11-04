@@ -1,6 +1,8 @@
 # A saved segment: a name plus the rules that define who is in it.
 # Stored in PostgreSQL. The guests it matches live in ClickHouse.
 class Segment < ApplicationRecord
+  has_many :campaigns, dependent: :destroy
+
   validates :name, presence: true, length: { maximum: 100 }
   validate :rules_are_valid
 
