@@ -19,7 +19,7 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>Liftline</h1>
+        <h1>Guest Segment Builder</h1>
         <nav>
           <button className={view.name === 'list' ? 'tab active' : 'tab'} onClick={() => setView({ name: 'list' })}>
             Saved segments
