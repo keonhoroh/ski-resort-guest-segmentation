@@ -4,6 +4,8 @@ A guest segmentation tool for a fictional ski resort. A marketer builds a group 
 
 All data is synthetic. No real messages are sent.
 
+**[Live demo](https://guest-segment-builder-zfgt.onrender.com)**: it runs on free plans, so the first visit can take about a minute to wake up. See [Deployment](#deployment) for the limits.
+
 ## Stack
 
 | Layer | Technology |
