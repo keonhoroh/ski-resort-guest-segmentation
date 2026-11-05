@@ -29,7 +29,7 @@ export default function App() {
   return (
     <div className="app">
       <header>
-        <h1>Guest Segment Builder</h1>
+        <h1>Ski Resort Guest Segmentation Platform</h1>
         <nav>
           <button className={tab(view.name === 'list')} onClick={() => setView({ name: 'list' })}>
             Saved segments

@@ -1,4 +1,4 @@
-# Guest Segment Builder
+# Ski Resort Guest Segmentation Platform
 
 A guest segmentation tool for a fictional ski resort. A marketer builds a group of guests from rules (for example, "season pass holders who have not visited in 30 days"), sees the audience size update as they edit, saves the segment, and launches a campaign to it.
 
