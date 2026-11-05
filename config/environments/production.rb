@@ -13,7 +13,9 @@ Rails.application.configure do
   config.consider_all_requests_local = false
 
   # Cache assets for far-future expiry since they are all digest stamped.
-  config.public_file_server.headers = { "cache-control" => "public, max-age=#{1.year.to_i}" }
+  # public/ holds the built web app. Keep the cache short so browsers pick up
+  # a new index.html soon after a deploy.
+  config.public_file_server.headers = { "cache-control" => "public, max-age=300" }
 
   # Enable serving of images, stylesheets, and JavaScripts from an asset server.
   # config.asset_host = "http://assets.example.com"

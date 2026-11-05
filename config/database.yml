@@ -26,6 +26,10 @@ test:
 
 # On the live server (Stage 7), the host provides a DATABASE_URL setting,
 # which Rails uses automatically instead of the values above.
+# The URL holds the host, port, name, and login. This doesn't use *default,
+# because a URL with no port would otherwise pick up the local port above.
 production:
-  <<: *default
-  database: liftline_production
+  adapter: postgresql
+  encoding: unicode
+  max_connections: <%= ENV.fetch("RAILS_MAX_THREADS") { 5 } %>
+  url: <%= ENV["DATABASE_URL"] %>

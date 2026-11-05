@@ -1,0 +1,53 @@
+# Everything runs on free plans. See "Deployment" in the README for the limits.
+databases:
+  - name: guest-segments-db
+    plan: free
+    region: virginia
+    ipAllowList: []
+
+services:
+  - type: keyvalue
+    name: guest-segments-redis
+    plan: free
+    region: virginia
+    ipAllowList: []
+    maxmemoryPolicy: noeviction
+
+  - type: web
+    name: guest-segment-builder
+    runtime: ruby
+    plan: free
+    region: virginia
+    buildCommand: bin/render-build.sh
+    startCommand: bundle exec puma -C config/puma.rb
+    healthCheckPath: /up
+    envVars:
+      - key: RAILS_ENV
+        value: production
+      - key: BUNDLE_WITHOUT
+        value: development:test
+      - key: NODE_VERSION
+        value: "22"
+      - key: WEB_CONCURRENCY
+        value: "0"
+      - key: SIDEKIQ_EMBEDDED
+        value: "true"
+      - key: SECRET_KEY_BASE
+        generateValue: true
+      - key: DATABASE_URL
+        fromDatabase:
+          name: guest-segments-db
+          property: connectionString
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: guest-segments-redis
+          property: connectionString
+      - key: CLICKHOUSE_DB
+        value: guest_segments
+      - key: CLICKHOUSE_URL
+        sync: false
+      - key: CLICKHOUSE_USER
+        sync: false
+      - key: CLICKHOUSE_PASSWORD
+        sync: false

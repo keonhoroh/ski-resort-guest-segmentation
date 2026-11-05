@@ -47,7 +47,7 @@ export default function App() {
       </header>
 
       <main>
-        {optionsError && <p className="errors">Could not reach the server. Is Rails running?</p>}
+        {optionsError && <p className="errors">Could not reach the server. Try again in a minute.</p>}
         {!optionsError && !options && <p className="muted">Loading…</p>}
 
         {options && view.name === 'list' && (

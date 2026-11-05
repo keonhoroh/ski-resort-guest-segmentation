@@ -26,3 +26,8 @@
 # Ignore key files for decrypting credentials and more.
 /config/*.key
 
+# The built web app, copied here by bin/render-build.sh.
+/public/assets
+/public/index.html
+/public/favicon.svg
+

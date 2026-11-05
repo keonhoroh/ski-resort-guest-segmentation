@@ -78,6 +78,26 @@ bundle exec sidekiq               # background jobs (in a second terminal)
 cd frontend && npm install && npm run dev  # web app on http://localhost:5173
 ```
 
+## Deployment
+
+`render.yaml` defines everything on [Render](https://render.com)'s free plans, with ClickHouse on a [ClickHouse Cloud](https://clickhouse.com/cloud) trial. Rails serves the React app from `public/`, so the page and the API share one web service. `bin/render-build.sh` builds the page and updates both databases on every deploy.
+
+To deploy your own copy:
+
+1. Create a ClickHouse Cloud service, in AWS `us-east-1` to sit near Render's Virginia region.
+2. In Render, create a Blueprint from this repository and enter the three `CLICKHOUSE_*` values when asked. `CLICKHOUSE_URL` is the service's HTTPS address, including the port.
+3. Load the data once from your own machine, with the same `CLICKHOUSE_*` values and `CLICKHOUSE_DB=guest_segments` in your shell: `SCALE=full bin/rails clickhouse:generate`.
+
+Free plans come with limits:
+
+| Limit | Effect |
+|---|---|
+| The web service sleeps after 15 idle minutes | The next visit waits about a minute on a Render loading page |
+| Background workers aren't free | Sidekiq runs inside the web process (`SIDEKIQ_EMBEDDED=true`), so a busy campaign shares its small CPU with the API. A paid worker would separate them |
+| Free Key Value keeps data in memory only | A restart loses queued jobs, and a campaign that was in progress stays marked as running |
+| Free PostgreSQL expires after 30 days | Saved segments and campaigns go with it |
+| The ClickHouse Cloud trial lasts 30 days | Audience counts stop working when it ends |
+
 ## Benchmarks
 
 ```sh

@@ -37,3 +37,19 @@ plugin :tmp_restart
 # Specify the PID file. Defaults to tmp/pids/server.pid in development.
 # In other environments, only set the PID file if requested.
 pidfile ENV["PIDFILE"] if ENV["PIDFILE"]
+
+# The free hosting plan has no separate worker service, so run Sidekiq inside
+# this process. Puma's 3 threads plus these 2 stay within the 5 database
+# connections in config/database.yml.
+if ENV["SIDEKIQ_EMBEDDED"] == "true"
+  sidekiq = nil
+
+  after_booted do
+    sidekiq = Sidekiq.configure_embed { |config| config.concurrency = 2 }
+    sidekiq.run
+  end
+
+  # Puma calls this from a signal handler, where Sidekiq's locks aren't allowed,
+  # so stop it from a separate thread.
+  after_stopped { Thread.new { sidekiq&.stop }.join }
+end
